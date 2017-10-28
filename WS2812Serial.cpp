@@ -4,14 +4,10 @@
 bool WS2812Serial::begin()
 {
 	uint32_t divisor, portconfig, hwtrigger;
-	#if defined(KINETISK)
 	KINETISK_UART_t *uart;
-	#elif defined(KINETISL)
-	KINETISL_UART_t *uart;
-	#endif
 
 	switch (pin) {
-#if defined(KINETISK)
+#if defined(KINETISK) // Teensy 3.x
 	  case 1: // Serial1
 	  case 5:
 	#if defined(__MK64FX512__) || defined(__MK66FX1M0__)
@@ -73,8 +69,30 @@ bool WS2812Serial::begin()
 		SIM_SCGC1 |= SIM_SCGC1_UART5;
 		break;
 	#endif
-#elif defined(KINETISL)
-	// TODO: Teesny LC support....
+
+#elif defined(KINETISL)	// Teensy LC
+	  case 1: // Serial1
+	  case 5:
+		uart = &KINETISK_UART0;
+		divisor = 2;
+		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
+		hwtrigger = DMAMUX_SOURCE_UART0_TX;
+		SIM_SCGC4 |= SIM_SCGC4_UART0;
+		break;
+	  case 4:
+		uart = &KINETISK_UART0;
+		divisor = 2;
+		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(2);
+		hwtrigger = DMAMUX_SOURCE_UART0_TX;
+		SIM_SCGC4 |= SIM_SCGC4_UART0;
+		break;
+	  case 24:
+		uart = &KINETISK_UART0;
+		divisor = 2;
+		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(4);
+		hwtrigger = DMAMUX_SOURCE_UART0_TX;
+		SIM_SCGC4 |= SIM_SCGC4_UART0;
+		break;
 #endif
 	  default:
 		return false; // pin not supported
@@ -83,14 +101,22 @@ bool WS2812Serial::begin()
 		dma = new DMAChannel;
 		if (!dma) return false; // unable to allocate DMA channel
 	}
+#if defined(KINETISK)
 	uart->BDH = (divisor >> 13) & 0x1F;
 	uart->BDL = (divisor >> 5) & 0xFF;
 	uart->C4 = divisor & 0x1F;
+#elif defined(KINETISL)
+	uart->BDH = (divisor >> 8) & 0x1F;
+	uart->BDL = divisor & 0xFF;
+	uart->C4 = 9;
+#endif
 	uart->C1 = 0;
-	uart->PFIFO = 0;
 	uart->C2 = UART_C2_TE | UART_C2_TIE;
 	uart->C3 = UART_C3_TXINV;
 	uart->C5 = UART_C5_TDMAS;
+#if defined(KINETISK)
+	uart->PFIFO = 0; // TODO: is this ok for Serial3-6?
+#endif
 	*(portConfigRegister(pin)) = portconfig;
 	dma->destination(uart->D);
 	dma->triggerAtHardwareEvent(hwtrigger);
@@ -101,9 +127,16 @@ bool WS2812Serial::begin()
 void WS2812Serial::show()
 {
 	// wait if prior DMA still in progress
+#if defined(KINETISK)
 	while ((DMA_ERQ & (1 << dma->channel))) {
 		yield();
 	}
+#elif defined(KINETISL)
+	while ((dma->CFG->DCR & DMA_DCR_ERQ)) {
+		yield();
+	}
+#elif defined(KINETISL)
+#endif
 	// wait 300us WS2812 reset time
 	uint32_t min_elapsed = ((numled * 34134) >> 10) + 300;
 	if (min_elapsed < 2500) min_elapsed = 2500;
