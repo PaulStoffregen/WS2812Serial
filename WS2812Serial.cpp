@@ -135,7 +135,6 @@ void WS2812Serial::show()
 	while ((dma->CFG->DCR & DMA_DCR_ERQ)) {
 		yield();
 	}
-#elif defined(KINETISL)
 #endif
 	// wait 300us WS2812 reset time
 	uint32_t min_elapsed = ((numled * 34134) >> 10) + 300;
@@ -173,10 +172,18 @@ void WS2812Serial::show()
 			*fb++ = x;
 		} while (fb < stop);
 	}
+#if defined(KINETISK)
 	dma->sourceBuffer(frameBuffer, numled * 8);
 	dma->transferSize(1);
 	dma->transferCount(numled * 8);
 	dma->disableOnCompletion();
 	dma->enable();
+#elif defined(KINETISL)
+	dma->CFG->SAR = frameBuffer;
+	dma->CFG->DSR_BCR = 0x01000000;
+	dma->CFG->DSR_BCR = numled * 8;
+	dma->CFG->DCR = DMA_DCR_ERQ | DMA_DCR_CS | DMA_DCR_SSIZE(1) |
+		DMA_DCR_SINC | DMA_DCR_DSIZE(1) | DMA_DCR_D_REQ;
+#endif
 }
 
