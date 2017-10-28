@@ -44,6 +44,7 @@ private:
 	uint8_t *frameBuffer;
 	uint8_t *drawBuffer;
 	DMAChannel *dma = nullptr;
+	uint32_t prior_micros = 0;
 };
 
 #endif

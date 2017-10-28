@@ -100,8 +100,20 @@ bool WS2812Serial::begin()
 
 void WS2812Serial::show()
 {
-	// TODO: wait if prior DMA in progress
-	// TODO: wait 300us WS2812 reset time
+	// wait if prior DMA still in progress
+	while ((DMA_ERQ & (1 << dma->channel))) {
+		yield();
+	}
+	// wait 300us WS2812 reset time
+	uint32_t min_elapsed = ((numled * 34134) >> 10) + 300;
+	if (min_elapsed < 2500) min_elapsed = 2500;
+	uint32_t m;
+	while (1) {
+		m = micros();
+		if ((m - prior_micros) > min_elapsed) break;
+		yield();
+	}
+	prior_micros = m;
 	const uint8_t *p = drawBuffer;
 	const uint8_t *end = p + (numled * 3);
 	uint8_t *fb = frameBuffer;
