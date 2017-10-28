@@ -4,16 +4,78 @@
 bool WS2812Serial::begin()
 {
 	uint32_t divisor, portconfig, hwtrigger;
+	#if defined(KINETISK)
 	KINETISK_UART_t *uart;
+	#elif defined(KINETISL)
+	KINETISL_UART_t *uart;
+	#endif
 
 	switch (pin) {
-	  case 1:
+#if defined(KINETISK)
+	  case 1: // Serial1
+	  case 5:
+	#if defined(__MK64FX512__) || defined(__MK66FX1M0__)
+	  case 26:
+	#endif
 		uart = &KINETISK_UART0;
 		divisor = BAUD2DIV(2400000);
 		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
 		hwtrigger = DMAMUX_SOURCE_UART0_TX;
 		SIM_SCGC4 |= SIM_SCGC4_UART0;
 		break;
+
+	  case 10: // Serial2
+	#if defined(__MK20DX128__) || defined(__MK20DX256__)
+	  case 31:
+	#elif defined(__MK64FX512__) || defined(__MK66FX1M0__)
+	  case 58:
+	#endif
+		uart = &KINETISK_UART1;
+		divisor = BAUD2DIV2(2400000);
+		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
+		hwtrigger = DMAMUX_SOURCE_UART1_TX;
+		SIM_SCGC4 |= SIM_SCGC4_UART1;
+		break;
+
+	  case 8: // Serial3
+	  case 20:
+		uart = &KINETISK_UART2;
+		divisor = BAUD2DIV3(2400000);
+		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
+		hwtrigger = DMAMUX_SOURCE_UART2_TX;
+		SIM_SCGC4 |= SIM_SCGC4_UART2;
+		break;
+
+	#if defined(__MK64FX512__) || defined(__MK66FX1M0__)
+	  case 32: // Serial4
+	  case 62:
+		uart = &KINETISK_UART3;
+		divisor = BAUD2DIV3(2400000);
+		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
+		hwtrigger = DMAMUX_SOURCE_UART3_TX;
+		SIM_SCGC4 |= SIM_SCGC4_UART3;
+		break;
+
+	  case 33: // Serial5
+		uart = &KINETISK_UART4;
+		divisor = BAUD2DIV3(2400000);
+		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
+		hwtrigger = DMAMUX_SOURCE_UART4_RXTX;
+		SIM_SCGC1 |= SIM_SCGC1_UART4;
+		break;
+	#endif
+	#if defined(__MK64FX512__)
+	  case 48: // Serial6
+		uart = &KINETISK_UART5;
+		divisor = BAUD2DIV3(2400000);
+		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
+		hwtrigger = DMAMUX_SOURCE_UART5_RXTX;
+		SIM_SCGC1 |= SIM_SCGC1_UART5;
+		break;
+	#endif
+#elif defined(KINETISL)
+	// TODO: Teesny LC support....
+#endif
 	  default:
 		return false; // pin not supported
 	}
