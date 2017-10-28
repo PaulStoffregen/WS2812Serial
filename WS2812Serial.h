@@ -23,16 +23,16 @@ public:
 	void setPixel(uint32_t num, int color) {
 		if (num >= numled) return;
 		num *= 3;
-		frameBuffer[num+0] = color;
-		frameBuffer[num+1] = color >> 8;
-		frameBuffer[num+2] = color >> 16;
+		drawBuffer[num+0] = color & 255;
+		drawBuffer[num+1] = (color >> 8) & 255;
+		drawBuffer[num+2] = (color >> 16) & 255;
 	}
 	void setPixel(uint32_t num, uint8_t red, uint8_t green, uint8_t blue) {
 		if (num >= numled) return;
 		num *= 3;
-		frameBuffer[num+0] = blue;
-		frameBuffer[num+1] = green;
-		frameBuffer[num+2] = red;
+		drawBuffer[num+0] = blue;
+		drawBuffer[num+1] = green;
+		drawBuffer[num+2] = red;
 	}
 	void show();
 	bool busy();
@@ -44,10 +44,8 @@ private:
 	const uint8_t config;
 	uint8_t *frameBuffer;
 	uint8_t *drawBuffer;
-	//HardwareSerial &serial;
 	KINETISK_UART_t *uart;
 	DMAChannel *dma = nullptr;
-
 };
 
 #endif
