@@ -13,13 +13,11 @@
 
 class WS2812Serial {
 public:
-	constexpr WS2812Serial(uint16_t n, void *f, void *d, HardwareSerial &s, uint8_t c) :
-		numled(n), config(c),
-		frameBuffer((uint8_t *)f), drawBuffer((uint8_t *)d),
-		uart( &s == &Serial1 ? &KINETISK_UART0 : nullptr)
-	{
+	constexpr WS2812Serial(uint16_t num, void *fb, void *db, uint8_t pin, uint8_t cfg) :
+		numled(num), pin(pin), config(cfg),
+		frameBuffer((uint8_t *)fb), drawBuffer((uint8_t *)db) {
 	}
-	void begin();
+	bool begin();
 	void setPixel(uint32_t num, int color) {
 		if (num >= numled) return;
 		num *= 3;
@@ -41,10 +39,10 @@ public:
 	}
 private:
 	const uint16_t numled;
+	const uint8_t pin;
 	const uint8_t config;
 	uint8_t *frameBuffer;
 	uint8_t *drawBuffer;
-	KINETISK_UART_t *uart;
 	DMAChannel *dma = nullptr;
 };
 
