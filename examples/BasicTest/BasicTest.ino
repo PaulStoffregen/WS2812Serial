@@ -10,7 +10,7 @@ const int pin = 1;
 //   Teensy 3.6:  1, 5, 8, 10, 20, 26, 32, 33
 
 byte drawingMemory[numled*3];
-DMAMEM byte displayMemory[numled*8];
+DMAMEM byte displayMemory[numled*12];
 
 WS2812Serial leds(numled, displayMemory, drawingMemory, pin, WS2812_GRB);
 
