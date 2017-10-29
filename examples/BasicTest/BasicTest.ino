@@ -1,3 +1,9 @@
+/* WS2812Serial BasicTest Example
+
+   Test LEDs by turning then 7 different colors.
+
+   This example code is in the public domain. */
+
 #include <WS2812Serial.h>
 
 const int numled = 64;
@@ -9,8 +15,8 @@ const int pin = 1;
 //   Teensy 3.5:  1, 5, 8, 10, 20, 26, 32, 33, 48
 //   Teensy 3.6:  1, 5, 8, 10, 20, 26, 32, 33
 
-byte drawingMemory[numled*3];
-DMAMEM byte displayMemory[numled*12];
+byte drawingMemory[numled*3];         //  3 bytes per LED
+DMAMEM byte displayMemory[numled*12]; // 12 bytes per LED
 
 WS2812Serial leds(numled, displayMemory, drawingMemory, pin, WS2812_GRB);
 

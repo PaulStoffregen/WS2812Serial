@@ -15,7 +15,7 @@ more time to draw the next frame.
 
 WS2812Serial controls a single LED strip, using only 1 pin.  While any number of
 LEDs may be connected, in practice 1 pin is best for small projects with less
-than 500 to 1000 LEDs.  OctoWS2811 offers 8 parallel outputs for large projects.
+than 600 LEDs.  OctoWS2811 offers 8 parallel outputs for large projects.
 
 Non-blocking performance does come with a cost.  15 bytes of memory are required
 per LED, rather than the usual 3 bytes with [FastLED](http://fastled.io/) or
