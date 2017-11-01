@@ -51,7 +51,8 @@ output.  But a buffer chip to boost the signal to 5 volts is still the best
 practice.
 
 Teensy LC has a 5V buffer chip built in, connected to pin 17.  The best way
-to use this buffer is leave pin 17 unused, and connect the data signals from
+to use this buffer is leave pin 17 unused by your program (the pin defaults
+to a low power disabled state), and connect the data signals from
 pin 24 (or any other supported pin) to pin 17.  Then connect the WS2812 LEDs
 to the 5V signal output.
 
