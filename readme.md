@@ -3,7 +3,7 @@
 Similar to [OctoWS2811](https://www.pjrc.com/teensy/td_libs_OctoWS2811.html), this library
 allows you to use WS2811, WS2812, WS2812B / NeoPixel LEDs without blocking interrupts.
 
-![](ws2812serial.jpg)
+![](extras/ws2812serial.jpg)
 
 Non-blocking allows other libraries, especially
 [Audio](https://www.pjrc.com/teensy/td_libs_Audio.html) and high speed serial communication
@@ -40,3 +40,26 @@ oversampling needed to run at the high speed required.
 Serial6 on Teensy 3.6 is not currently supported, due to different hardware
 registers.
 
+If more than one object instance is created, each must use a different
+serial port, and each must have its own buffer memory.
+
+## 5 Volt Data Signal Level
+
+WS2812 / NeoPixel LEDs are meant to use 5 volt signals.  Most of WS2812 LEDs
+made before 2014 or after 2015 can use 3.3V signals, which Teensy LC and 3.x
+output.  But a buffer chip to boost the signal to 5 volts is still the best
+practice.
+
+Teensy LC has a 5V buffer chip built in, connected to pin 17.  The best way
+to use this buffer is leave pin 17 unused, and connect the data signals from
+pin 24 (or any other supported pin) to pin 17.  Then connect the WS2812 LEDs
+to the 5V signal output.
+
+![](extras/teensylc_5v.jpg)
+
+For Teensy 3.x, a separate 5V buffer chip should be used.  Unidirectional
+buffer chips like
+[74HCT245](https://www.fairchildsemi.com/datasheets/74/74VHCT245A.pdf) and
+[74AHCT125](https://www.adafruit.com/product/1787) are best.  Do NOT use
+[these mosfet transistor level shifters](https://www.sparkfun.com/products/12009).
+They are far too slow for WS2812 LED data.
