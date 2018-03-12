@@ -55,6 +55,9 @@ public:
 		drawBuffer[num+1] = green;
 		drawBuffer[num+2] = red;
 	}
+	void clear() {
+        	memset(drawBuffer, 0, numled * 3);
+	} 	
 	void show();
 	bool busy();
 	uint16_t numPixels() {
