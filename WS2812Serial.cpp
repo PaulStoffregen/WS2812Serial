@@ -124,6 +124,7 @@ bool WS2812Serial::begin()
 		if (!dma) return false; // unable to allocate DMA channel
 	}
 #if defined(KINETISK)
+	if (divisor < 32) divisor = 32;
 	uart->BDH = (divisor >> 13) & 0x1F;
 	uart->BDL = (divisor >> 5) & 0xFF;
 	uart->C4 = divisor & 0x1F;
