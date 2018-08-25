@@ -56,7 +56,6 @@ bool WS2812Serial::begin()
 		break;
 
 	  case 8: // Serial3
-	  case 20:
 		uart = &KINETISK_UART2;
 		divisor = BAUD2DIV3(4000000);
 		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);

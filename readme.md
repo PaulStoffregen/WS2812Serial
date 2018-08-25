@@ -29,13 +29,15 @@ used to transmit the data, making that port unavailable for other uses.
 | :------ | :---------: | :--------: | :--------: | :--------: |
 | Serial1 | 1, 4, 5, 24 | 1, 5       | 1, 5, 26   | 1, 5, 26   |
 | Serial2 |             | 10, 31     | 10         | 10         |
-| Serial3 |             | 8, 20      | 8, 20      | 8, 20      |
+| Serial3 |             | 8          | 8          | 8          |
 | Serial4 |             |            | 32         | 32         |
 | Serial5 |             |            | 33         | 33         |
 | Serial6 |             |            | 48         |            |
 
 Serial2 & Serial3 on Teensy LC are not supported, due to lack of configurable
 oversampling needed to run at the high speed required.
+
+Serial3-Serial6 should be used only with CPU speeds 120 or 180 MHz.
 
 Serial6 on Teensy 3.6 is not currently supported, due to different hardware
 registers.

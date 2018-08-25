@@ -11,9 +11,9 @@ const int pin = 1;
 
 // Usable pins:
 //   Teensy LC:   1, 4, 5, 24
-//   Teensy 3.2:  1, 5, 8, 10, 20, 31
-//   Teensy 3.5:  1, 5, 8, 10, 20, 26, 32, 33, 48
-//   Teensy 3.6:  1, 5, 8, 10, 20, 26, 32, 33
+//   Teensy 3.2:  1, 5, 8, 10, 31   (overclock to 120 MHz for pin 8)
+//   Teensy 3.5:  1, 5, 8, 10, 26, 32, 33, 48
+//   Teensy 3.6:  1, 5, 8, 10, 26, 32, 33
 
 byte drawingMemory[numled*3];         //  3 bytes per LED
 DMAMEM byte displayMemory[numled*12]; // 12 bytes per LED
