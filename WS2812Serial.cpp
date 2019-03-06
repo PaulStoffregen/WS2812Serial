@@ -154,12 +154,12 @@ bool WS2812Serial::busy()
 #elif defined(KINETISL)
 	dma_in_progress = dma->CFG->DCR & DMA_DCR_ERQ;
 #endif
-    if (dma_in_progress) return true;
+	if (dma_in_progress) return true;
 
-    // New WS2812s have 280us minimum reset time
-    // https://blog.particle.io/2017/05/11/heads-up-ws2812b-neopixels-are-about-to-change/
+	// New WS2812s have 280us minimum reset time
+	// https://blog.particle.io/2017/05/11/heads-up-ws2812b-neopixels-are-about-to-change/
 	uint32_t min_elapsed = (numled * 30) + 300;
-    // Old WS2812s have a PWM rate of ~400Hz, so don't update faster than that
+	// Old WS2812s have a PWM rate of ~400Hz, so don't update faster than that
 	if (min_elapsed < 2500) min_elapsed = 2500;
 	bool waiting_for_ws2812 = (micros() - prior_micros) < min_elapsed;
 	return waiting_for_ws2812;
@@ -168,7 +168,7 @@ bool WS2812Serial::busy()
 void WS2812Serial::show()
 {
 	// wait if prior DMA still in progress or WS2812 refresh cycle (data + reset)
-    // not finished
+	// not finished
 	while (busy()) {
 		yield();
 	}
