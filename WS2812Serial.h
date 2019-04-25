@@ -1,7 +1,7 @@
 /*  WS2812Serial - Non-blocking WS2812 LED Display Library
     https://github.com/PaulStoffregen/WS2812Serial
     Copyright (c) 2017 Paul Stoffregen, PJRC.COM, LLC
-
+	
 	Modified by Adam Zeloof (adam.zeloof.xyz) to work with RGBW LEDs
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
