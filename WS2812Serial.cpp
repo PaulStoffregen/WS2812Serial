@@ -21,9 +21,9 @@
     THE SOFTWARE.
 */
 
-#include "WS2812Serial.h"
+#include "WS2812SerialRGBW.h"
 
-bool WS2812Serial::begin()
+bool WS2812SerialRGBW::begin()
 {
 	uint32_t divisor, portconfig, hwtrigger;
 	KINETISK_UART_t *uart;
@@ -56,6 +56,7 @@ bool WS2812Serial::begin()
 		break;
 
 	  case 8: // Serial3
+	  case 20:
 		uart = &KINETISK_UART2;
 		divisor = BAUD2DIV3(4000000);
 		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
@@ -123,7 +124,6 @@ bool WS2812Serial::begin()
 		if (!dma) return false; // unable to allocate DMA channel
 	}
 #if defined(KINETISK)
-	if (divisor < 32) divisor = 32;
 	uart->BDH = (divisor >> 13) & 0x1F;
 	uart->BDL = (divisor >> 5) & 0xFF;
 	uart->C4 = divisor & 0x1F;
@@ -142,11 +142,11 @@ bool WS2812Serial::begin()
 	*(portConfigRegister(pin)) = portconfig;
 	dma->destination(uart->D);
 	dma->triggerAtHardwareEvent(hwtrigger);
-	memset(drawBuffer, 0, numled * 3);
+	memset(drawBuffer, 0, numled * 4);
 	return true;
 }
 
-void WS2812Serial::show()
+void WS2812SerialRGBW::show()
 {
 	// wait if prior DMA still in progress
 #if defined(KINETISK)
@@ -160,12 +160,14 @@ void WS2812Serial::show()
 #endif
 	// copy drawing buffer to frame buffer
 	const uint8_t *p = drawBuffer;
-	const uint8_t *end = p + (numled * 3);
+	const uint8_t *end = p + (numled * 4);
 	uint8_t *fb = frameBuffer;
 	while (p < end) {
 		uint8_t b = *p++;
 		uint8_t g = *p++;
 		uint8_t r = *p++;
+		uint8_t w = *p++;
+
 		uint32_t n=0;
 		switch (config) {
 		  case WS2812_RGB: n = (r << 16) | (g << 8) | b; break;
@@ -174,8 +176,9 @@ void WS2812Serial::show()
 		  case WS2812_GBR: n = (g << 16) | (b << 8) | r; break;
 		  case WS2812_BRG: n = (b << 16) | (r << 8) | g; break;
 		  case WS2812_BGR: n = (b << 16) | (g << 8) | r; break;
+		  case WS2812_RGBW: n = (r << 24) | (g << 16) | (b << 8) | w; break;
 		}
-		const uint8_t *stop = fb + 12;
+		const uint8_t *stop = fb + 16;
 		do {
 			uint8_t x = 0x08;
 			if (!(n & 0x00800000)) x |= 0x07;
@@ -196,17 +199,16 @@ void WS2812Serial::show()
 	prior_micros = m;
 	// start DMA transfer to update LEDs  :-)
 #if defined(KINETISK)
-	dma->sourceBuffer(frameBuffer, numled * 12);
+	dma->sourceBuffer(frameBuffer, numled * 16);
 	dma->transferSize(1);
-	dma->transferCount(numled * 12);
+	dma->transferCount(numled * 16);
 	dma->disableOnCompletion();
 	dma->enable();
 #elif defined(KINETISL)
 	dma->CFG->SAR = frameBuffer;
 	dma->CFG->DSR_BCR = 0x01000000;
-	dma->CFG->DSR_BCR = numled * 12;
+	dma->CFG->DSR_BCR = numled * 16;
 	dma->CFG->DCR = DMA_DCR_ERQ | DMA_DCR_CS | DMA_DCR_SSIZE(1) |
 		DMA_DCR_SINC | DMA_DCR_DSIZE(1) | DMA_DCR_D_REQ;
 #endif
 }
-
