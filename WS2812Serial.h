@@ -63,6 +63,16 @@ public:
 	uint16_t numPixels() {
 		return numled;
 	}
+	// Functions for compatibility with Adafruit_NeoPixel
+	void setPixelColor(uint16_t num, uint32_t color) {
+		setPixel(num, color);
+	}
+	void setPixelColor(uint16_t num, uint8_t red, uint8_t green, uint8_t blue) {
+		setPixel(num, red, green, blue);
+	}
+	uint32_t Color(uint8_t red, uint8_t green, uint8_t blue) {
+		return (red << 16) | (green << 8) | blue;
+	}
 private:
 	const uint16_t numled;
 	const uint8_t pin;
