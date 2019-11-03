@@ -1,6 +1,8 @@
 /*  WS2812Serial - Non-blocking WS2812 LED Display Library
     https://github.com/PaulStoffregen/WS2812Serial
     Copyright (c) 2017 Paul Stoffregen, PJRC.COM, LLC
+	
+	Modified by Adam Zeloof (adam.zeloof.xyz) to work with RGBW LEDs
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +35,7 @@
 #define WS2812_GBR      3
 #define WS2812_BRG      4
 #define WS2812_BGR      5
+#define WS2812_RGBW     6
 
 class WS2812Serial {
 public:
@@ -43,10 +46,17 @@ public:
 	bool begin();
 	void setPixel(uint32_t num, int color) {
 		if (num >= numled) return;
-		num *= 3;
+		if (config == WS2812_RGBW) {
+			num *= 4;
+		} else {
+			num *= 3;
+		}
 		drawBuffer[num+0] = color & 255;
 		drawBuffer[num+1] = (color >> 8) & 255;
 		drawBuffer[num+2] = (color >> 16) & 255;
+		if (config == WS2812_RGBW) {
+			drawBuffer[num+3] = (color >> 24) & 255;
+		}
 	}
 	void setPixel(uint32_t num, uint8_t red, uint8_t green, uint8_t blue) {
 		if (num >= numled) return;
@@ -55,8 +65,20 @@ public:
 		drawBuffer[num+1] = green;
 		drawBuffer[num+2] = red;
 	}
+	void setPixel(uint32_t num, uint8_t red, uint8_t green, uint8_t blue, uint8_t white) {
+		if (num >= numled) return;
+		num *= 4;
+		drawBuffer[num+0] = blue;
+		drawBuffer[num+1] = green;
+		drawBuffer[num+2] = red;
+		drawBuffer[num+3] = white;
+	}
 	void clear() {
-        	memset(drawBuffer, 0, numled * 3);
+		if (config == WS2812_RGBW) {
+			memset(drawBuffer, 0, numled * 4);
+		} else {
+			memset(drawBuffer, 0, numled * 3);
+		}
 	} 	
 	void show();
 	bool busy();

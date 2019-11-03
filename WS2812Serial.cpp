@@ -1,6 +1,8 @@
 /*  WS2812Serial - Non-blocking WS2812 LED Display Library
     https://github.com/PaulStoffregen/WS2812Serial
     Copyright (c) 2017 Paul Stoffregen, PJRC.COM, LLC
+		
+		Modified by Adam Zeloof (adam.zeloof.xyz) to work with RGBW LEDs
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +24,20 @@
 */
 
 #include "WS2812Serial.h"
+uint8_t dispSize;
+uint8_t drawSize;
 
 bool WS2812Serial::begin()
 {
 	uint32_t divisor, portconfig, hwtrigger;
 	KINETISK_UART_t *uart;
-
+	if (config == WS2812_RGBW) {
+		dispSize = 16;
+		drawSize = 4;
+	} else {
+		dispSize = 12;
+		drawSize = 3;
+	}
 	switch (pin) {
 #if defined(KINETISK) // Teensy 3.x
 	  case 1: // Serial1
@@ -142,7 +152,7 @@ bool WS2812Serial::begin()
 	*(portConfigRegister(pin)) = portconfig;
 	dma->destination(uart->D);
 	dma->triggerAtHardwareEvent(hwtrigger);
-	memset(drawBuffer, 0, numled * 3);
+	memset(drawBuffer, 0, numled * drawSize);
 	return true;
 }
 
@@ -160,26 +170,36 @@ void WS2812Serial::show()
 #endif
 	// copy drawing buffer to frame buffer
 	const uint8_t *p = drawBuffer;
-	const uint8_t *end = p + (numled * 3);
+	const uint8_t *end = p + (numled * drawSize);
 	uint8_t *fb = frameBuffer;
 	while (p < end) {
+		uint8_t w;
 		uint8_t b = *p++;
 		uint8_t g = *p++;
 		uint8_t r = *p++;
+		if (config == WS2812_RGBW) {
+			w = *p++;
+		}
 		uint32_t n=0;
 		switch (config) {
-		  case WS2812_RGB: n = (r << 16) | (g << 8) | b; break;
-		  case WS2812_RBG: n = (r << 16) | (b << 8) | g; break;
-		  case WS2812_GRB: n = (g << 16) | (r << 8) | b; break;
-		  case WS2812_GBR: n = (g << 16) | (b << 8) | r; break;
-		  case WS2812_BRG: n = (b << 16) | (r << 8) | g; break;
-		  case WS2812_BGR: n = (b << 16) | (g << 8) | r; break;
+		  case WS2812_RGB:  n = (r << 16) | (g << 8)  | b; 						break;
+		  case WS2812_RBG:  n = (r << 16) | (b << 8)  | g; 						break;
+		  case WS2812_GRB:  n = (g << 16) | (r << 8)  | b; 						break;
+		  case WS2812_GBR:  n = (g << 16) | (b << 8)  | r; 						break;
+		  case WS2812_BRG:  n = (b << 16) | (r << 8)  | g; 						break;
+		  case WS2812_BGR:  n = (b << 16) | (g << 8)  | r; 						break;
+			case WS2812_RGBW: n = (g << 24) | (r << 16) | (b << 8) | w; break;
 		}
-		const uint8_t *stop = fb + 12;
+		const uint8_t *stop = fb + dispSize;
 		do {
 			uint8_t x = 0x08;
-			if (!(n & 0x00800000)) x |= 0x07;
-			if (!(n & 0x00400000)) x |= 0xE0;
+			if (config == WS2812_RGBW) {
+				if (!(n & 0x0080000000)) x |= 0x07;
+				if (!(n & 0x0040000000)) x |= 0xE0;
+			} else{
+				if (!(n & 0x00800000)) x |= 0x07;
+				if (!(n & 0x00400000)) x |= 0xE0;
+			}
 			n <<= 2;
 			*fb++ = x;
 		} while (fb < stop);
@@ -196,15 +216,15 @@ void WS2812Serial::show()
 	prior_micros = m;
 	// start DMA transfer to update LEDs  :-)
 #if defined(KINETISK)
-	dma->sourceBuffer(frameBuffer, numled * 12);
+	dma->sourceBuffer(frameBuffer, numled * dispSize);
 	dma->transferSize(1);
-	dma->transferCount(numled * 12);
+	dma->transferCount(numled * dispSize);
 	dma->disableOnCompletion();
 	dma->enable();
 #elif defined(KINETISL)
 	dma->CFG->SAR = frameBuffer;
 	dma->CFG->DSR_BCR = 0x01000000;
-	dma->CFG->DSR_BCR = numled * 12;
+	dma->CFG->DSR_BCR = numled * dispSize;
 	dma->CFG->DCR = DMA_DCR_ERQ | DMA_DCR_CS | DMA_DCR_SSIZE(1) |
 		DMA_DCR_SINC | DMA_DCR_DSIZE(1) | DMA_DCR_D_REQ;
 #endif
