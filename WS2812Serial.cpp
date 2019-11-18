@@ -146,18 +146,33 @@ bool WS2812Serial::begin()
 	return true;
 }
 
+bool WS2812Serial::busy()
+{
+	bool dma_in_progress = false;
+#if defined(KINETISK)
+	dma_in_progress = DMA_ERQ & (1 << dma->channel);
+#elif defined(KINETISL)
+	dma_in_progress = dma->CFG->DCR & DMA_DCR_ERQ;
+#endif
+	if (dma_in_progress) return true;
+
+	// New WS2812s have 280us minimum reset time
+	// https://blog.particle.io/2017/05/11/heads-up-ws2812b-neopixels-are-about-to-change/
+	uint32_t min_elapsed = (numled * 30) + 300;
+	// Old WS2812s have a PWM rate of ~400Hz, so don't update faster than that
+	if (min_elapsed < 2500) min_elapsed = 2500;
+	bool waiting_for_ws2812 = (micros() - prior_micros) < min_elapsed;
+	return waiting_for_ws2812;
+}
+
 void WS2812Serial::show()
 {
-	// wait if prior DMA still in progress
-#if defined(KINETISK)
-	while ((DMA_ERQ & (1 << dma->channel))) {
+	// wait if prior DMA still in progress or WS2812 refresh cycle (data + reset)
+	// not finished
+	while (busy()) {
 		yield();
 	}
-#elif defined(KINETISL)
-	while ((dma->CFG->DCR & DMA_DCR_ERQ)) {
-		yield();
-	}
-#endif
+
 	// copy drawing buffer to frame buffer
 	const uint8_t *p = drawBuffer;
 	const uint8_t *end = p + (numled * 3);
@@ -184,16 +199,8 @@ void WS2812Serial::show()
 			*fb++ = x;
 		} while (fb < stop);
 	}
-	// wait 300us WS2812 reset time
-	uint32_t min_elapsed = (numled * 30) + 300;
-	if (min_elapsed < 2500) min_elapsed = 2500;
-	uint32_t m;
-	while (1) {
-		m = micros();
-		if ((m - prior_micros) > min_elapsed) break;
-		yield();
-	}
-	prior_micros = m;
+
+	prior_micros = micros();
 	// start DMA transfer to update LEDs  :-)
 #if defined(KINETISK)
 	dma->sourceBuffer(frameBuffer, numled * 12);
