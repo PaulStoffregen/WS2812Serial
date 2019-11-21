@@ -12,6 +12,7 @@
 //   Teensy 3.2:  1, 5, 8, 10, 31   (overclock to 120 MHz for pin 8)
 //   Teensy 3.5:  1, 5, 8, 10, 26, 32, 33, 48
 //   Teensy 3.6:  1, 5, 8, 10, 26, 32, 33
+//   Teensy 4.0:  1, 8, 14, 16, 20, 24, 29, 39
 #define DATA_PIN 1
 
 // Define the array of leds

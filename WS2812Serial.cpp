@@ -138,7 +138,7 @@ bool WS2812Serial::begin()
 	  case 17: // Serial4
 		uart = &IMXRT_LPUART3; 
 		CCM_CCGR0 |= CCM_CCGR0_LPUART3(CCM_CCGR_ON);
-		hwtrigger = DMAMUX_SOURCE_LPUART4_TX; 
+		hwtrigger = DMAMUX_SOURCE_LPUART3_TX; 
 		break;
 	  case 20: // Serial5
 	  case 39: // Serial5 alt
