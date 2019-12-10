@@ -25,9 +25,12 @@
 
 bool WS2812Serial::begin()
 {
+#if defined(__IMXRT1062__) // Teensy 3.x
+	uint32_t hwtrigger;
+#else	
 	uint32_t divisor, portconfig, hwtrigger;
 	KINETISK_UART_t *uart;
-
+#endif
 	switch (pin) {
 #if defined(KINETISK) // Teensy 3.x
 	  case 1: // Serial1
@@ -94,6 +97,7 @@ bool WS2812Serial::begin()
 #elif defined(KINETISL)	// Teensy LC
 	  case 1: // Serial1
 	  case 5:
+	  	// NOT SURE HOW THIS WORKS ON LC????? 
 		uart = &KINETISK_UART0;
 		divisor = 1;
 		portconfig = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
@@ -114,6 +118,44 @@ bool WS2812Serial::begin()
 		hwtrigger = DMAMUX_SOURCE_UART0_TX;
 		SIM_SCGC4 |= SIM_SCGC4_UART0;
 		break;
+
+#elif defined(__IMXRT1062__)
+	  case 1: // Serial1
+		uart = &IMXRT_LPUART6; 
+		CCM_CCGR3 |= CCM_CCGR3_LPUART6(CCM_CCGR_ON);
+		hwtrigger = DMAMUX_SOURCE_LPUART6_TX; 
+		break;
+	  case 8: // Serial2
+		uart = &IMXRT_LPUART4; 
+		CCM_CCGR1 |= CCM_CCGR1_LPUART4(CCM_CCGR_ON);
+		hwtrigger = DMAMUX_SOURCE_LPUART4_TX; 
+		break;
+	  case 14: // Serial3
+		uart = &IMXRT_LPUART2; 
+		CCM_CCGR0 |= CCM_CCGR0_LPUART2(CCM_CCGR_ON);
+		hwtrigger = DMAMUX_SOURCE_LPUART2_TX; 
+		break;
+	  case 17: // Serial4
+		uart = &IMXRT_LPUART3; 
+		CCM_CCGR0 |= CCM_CCGR0_LPUART3(CCM_CCGR_ON);
+		hwtrigger = DMAMUX_SOURCE_LPUART3_TX; 
+		break;
+	  case 20: // Serial5
+	  case 39: // Serial5 alt
+		uart = &IMXRT_LPUART8; 
+		CCM_CCGR6 |= CCM_CCGR6_LPUART8(CCM_CCGR_ON);
+		hwtrigger = DMAMUX_SOURCE_LPUART8_TX; 
+		break;
+	  case 24: // Serial6
+		uart = &IMXRT_LPUART1; 
+		CCM_CCGR5 |= CCM_CCGR5_LPUART1(CCM_CCGR_ON);
+		hwtrigger = DMAMUX_SOURCE_LPUART1_TX; 
+		break;
+	  case 29: // Serial7
+		uart = &IMXRT_LPUART7; 
+		CCM_CCGR5 |= CCM_CCGR5_LPUART7(CCM_CCGR_ON);
+		hwtrigger = DMAMUX_SOURCE_LPUART7_TX; 
+		break;
 #endif
 	  default:
 		return false; // pin not supported
@@ -122,6 +164,27 @@ bool WS2812Serial::begin()
 		dma = new DMAChannel;
 		if (!dma) return false; // unable to allocate DMA channel
 	}
+#if defined(__IMXRT1062__)
+	// Convert Baud
+	// Computed values for 4mhz  
+	uart->CTRL = 0;	// clear everything
+	uart->BAUD = LPUART_BAUD_OSR(5) | LPUART_BAUD_SBR(1) | LPUART_BAUD_TDMAE;  // set baud configure for transfer DMA
+	uart->PINCFG = 0;
+	uint16_t tx_fifo_size = (((uart->FIFO >> 4) & 0x7) << 2);
+	uint8_t tx_water = (tx_fifo_size < 16) ? tx_fifo_size >> 1 : 7;
+//	uart->WATER = LPUART_WATER_TXWATER(1);	// guessing here? 
+//	uart->FIFO = 0;	// disable the fifo.
+	uart->WATER = LPUART_WATER_TXWATER(tx_water);
+	uart->FIFO |= LPUART_FIFO_TXFE;
+
+	uart->CTRL = (LPUART_CTRL_TE /*| LPUART_CTRL_TIE */ | LPUART_CTRL_TXINV); // enable transmitter and invert
+	// We need to configure the TX pin now.
+	*(portControlRegister(pin)) =  IOMUXC_PAD_SRE | IOMUXC_PAD_DSE(3) | IOMUXC_PAD_SPEED(3);
+	*(portConfigRegister(pin)) = 2;	// from hardware table for each one, but I think they are all 2...
+
+	dma->destination((volatile uint8_t&)uart->DATA);
+	//Serial.printf("HWTrigger: %x\n", hwtrigger);
+#else
 #if defined(KINETISK)
 	if (divisor < 32) divisor = 32;
 	uart->BDH = (divisor >> 13) & 0x1F;
@@ -141,6 +204,8 @@ bool WS2812Serial::begin()
 #endif
 	*(portConfigRegister(pin)) = portconfig;
 	dma->destination(uart->D);
+#endif 
+
 	dma->triggerAtHardwareEvent(hwtrigger);
 	memset(drawBuffer, 0, numled * 3);
 	return true;
@@ -157,6 +222,12 @@ void WS2812Serial::show()
 	while ((dma->CFG->DCR & DMA_DCR_ERQ)) {
 		yield();
 	}
+#elif defined(__IMXRT1062__)
+	//Serial.println("Show called");
+	while ((DMA_ERQ & (1 << dma->channel))) {
+		yield();
+	}
+	//Serial.println("After Yield");
 #endif
 	// copy drawing buffer to frame buffer
 	const uint8_t *p = drawBuffer;
@@ -207,6 +278,24 @@ void WS2812Serial::show()
 	dma->CFG->DSR_BCR = numled * 12;
 	dma->CFG->DCR = DMA_DCR_ERQ | DMA_DCR_CS | DMA_DCR_SSIZE(1) |
 		DMA_DCR_SINC | DMA_DCR_DSIZE(1) | DMA_DCR_D_REQ;
+#elif defined(__IMXRT1062__)
+	// See if we need to muck with DMA cache...
+	if ((uint32_t)frameBuffer >= 0x20200000u)  arm_dcache_flush(frameBuffer, numled * 12);
+	
+	dma->sourceBuffer(frameBuffer, numled * 12);
+//	dma->transferSize(1);
+	dma->transferCount(numled * 12);
+	dma->disableOnCompletion();
+
+/*	Serial.printf("%x %x:", (uint32_t)dma, (uint32_t)dma->TCD);
+
+	Serial.printf("SA:%x SO:%d AT:%x NB:%x SL:%d DA:%x DO: %d CI:%x DL:%x CS:%x BI:%x\n", (uint32_t)dma->TCD->SADDR,
+	dma->TCD->SOFF, dma->TCD->ATTR, dma->TCD->NBYTES, dma->TCD->SLAST, (uint32_t)dma->TCD->DADDR, 
+	dma->TCD->DOFF, dma->TCD->CITER, dma->TCD->DLASTSGA, dma->TCD->CSR, dma->TCD->BITER);
+*/
+	uart->STAT = 0;	// try clearing out the status
+	dma->enable();
+
 #endif
 }
 

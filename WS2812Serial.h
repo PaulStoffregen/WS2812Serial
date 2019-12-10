@@ -81,6 +81,9 @@ private:
 	uint8_t *drawBuffer;
 	DMAChannel *dma = nullptr;
 	uint32_t prior_micros = 0;
+	#if defined(__IMXRT1062__) // Teensy 3.x
+	IMXRT_LPUART_t *uart = nullptr; 
+	#endif
 };
 
 #endif
