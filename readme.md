@@ -31,8 +31,9 @@ used to transmit the data, making that port unavailable for other uses.
 | Serial2 |             | 10, 31     | 10         | 10         | 8          |
 | Serial3 |             | 8          | 8          | 8          | 14         |
 | Serial4 |             |            | 32         | 32         | 17         |
-| Serial5 |             |            | 33         | 33         | 20,39?     |
-| Serial6 |             |            | 48         |            | 29         |
+| Serial5 |             |            | 33         | 33         | 20, 39     |
+| Serial6 |             |            | 48         |            | 24         |
+| Serial7 |             |            |            |            | 29         |
 
 Serial2 & Serial3 on Teensy LC are not supported, due to lack of configurable
 oversampling needed to run at the high speed required.
