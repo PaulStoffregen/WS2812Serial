@@ -1,4 +1,4 @@
-/* WS2812Serial BasicTest Example
+/* WS2812Serial BasicTest_RGBW Example - Works with SK6812 RGBW LEDs
 
    Test LEDs by turning then 7 different colors.
 
