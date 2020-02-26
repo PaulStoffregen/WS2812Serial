@@ -213,6 +213,8 @@ bool WS2812Serial::begin()
 
 void WS2812Serial::show()
 {
+	uint32_t microseconds_per_led, bytes_per_led;
+
 	// wait if prior DMA still in progress
 #if defined(KINETISK)
 	while ((DMA_ERQ & (1 << dma->channel))) {
@@ -230,33 +232,95 @@ void WS2812Serial::show()
 	//Serial.println("After Yield");
 #endif
 	// copy drawing buffer to frame buffer
-	const uint8_t *p = drawBuffer;
-	const uint8_t *end = p + (numled * 3);
-	uint8_t *fb = frameBuffer;
-	while (p < end) {
-		uint8_t b = *p++;
-		uint8_t g = *p++;
-		uint8_t r = *p++;
-		uint32_t n=0;
-		switch (config) {
-		  case WS2812_RGB: n = (r << 16) | (g << 8) | b; break;
-		  case WS2812_RBG: n = (r << 16) | (b << 8) | g; break;
-		  case WS2812_GRB: n = (g << 16) | (r << 8) | b; break;
-		  case WS2812_GBR: n = (g << 16) | (b << 8) | r; break;
-		  case WS2812_BRG: n = (b << 16) | (r << 8) | g; break;
-		  case WS2812_BGR: n = (b << 16) | (g << 8) | r; break;
+	if (config < 6) {
+		// RGB
+		const uint8_t *p = drawBuffer;
+		const uint8_t *end = p + (numled * 3);
+		uint8_t *fb = frameBuffer;
+		while (p < end) {
+			uint8_t b = *p++;
+			uint8_t g = *p++;
+			uint8_t r = *p++;
+			uint32_t mult = brightness + 1;
+			b = (b * mult) >> 8;
+			g = (g * mult) >> 8;
+			r = (r * mult) >> 8;
+			uint32_t n=0;
+			switch (config) {
+			  case WS2812_RGB: n = (r << 16) | (g << 8) | b; break;
+			  case WS2812_RBG: n = (r << 16) | (b << 8) | g; break;
+			  case WS2812_GRB: n = (g << 16) | (r << 8) | b; break;
+			  case WS2812_GBR: n = (g << 16) | (b << 8) | r; break;
+			  case WS2812_BRG: n = (b << 16) | (r << 8) | g; break;
+			  case WS2812_BGR: n = (b << 16) | (g << 8) | r; break;
+			}
+			const uint8_t *stop = fb + 12;
+			do {
+				uint8_t x = 0x08;
+				if (!(n & 0x00800000)) x |= 0x07;
+				if (!(n & 0x00400000)) x |= 0xE0;
+				n <<= 2;
+				*fb++ = x;
+			} while (fb < stop);
 		}
-		const uint8_t *stop = fb + 12;
-		do {
-			uint8_t x = 0x08;
-			if (!(n & 0x00800000)) x |= 0x07;
-			if (!(n & 0x00400000)) x |= 0xE0;
-			n <<= 2;
-			*fb++ = x;
-		} while (fb < stop);
+		microseconds_per_led = 30;
+		bytes_per_led = 12;
+	} else {
+		// RGBW
+		const uint8_t *p = drawBuffer;
+		const uint8_t *end = p + (numled * 4);
+		uint8_t *fb = frameBuffer;
+		while (p < end) {
+			uint8_t b = *p++;
+			uint8_t g = *p++;
+			uint8_t r = *p++;
+			uint8_t w = *p++;
+			uint32_t mult = brightness + 1;
+			b = (b * mult) >> 8;
+			g = (g * mult) >> 8;
+			r = (r * mult) >> 8;
+			w = (w * mult) >> 8;
+			uint32_t n=0;
+			switch (config) {
+			  case WS2812_RGBW: n = (r << 24) | (g << 16) | (b << 8) | w; break;
+			  case WS2812_RBGW: n = (r << 24) | (b << 16) | (g << 8) | w; break;
+			  case WS2812_GRBW: n = (g << 24) | (r << 16) | (b << 8) | w; break;
+			  case WS2812_GBRW: n = (g << 24) | (b << 16) | (r << 8) | w; break;
+			  case WS2812_BRGW: n = (b << 24) | (r << 16) | (g << 8) | w; break;
+			  case WS2812_BGRW: n = (b << 24) | (b << 16) | (r << 8) | w; break;
+			  case WS2812_WRGB: n = (w << 24) | (r << 16) | (g << 8) | b; break;
+			  case WS2812_WRBG: n = (w << 24) | (r << 16) | (b << 8) | g; break;
+			  case WS2812_WGRB: n = (w << 24) | (g << 16) | (r << 8) | b; break;
+			  case WS2812_WGBR: n = (w << 24) | (g << 16) | (b << 8) | r; break;
+			  case WS2812_WBRG: n = (w << 24) | (b << 16) | (r << 8) | g; break;
+			  case WS2812_WBGR: n = (w << 24) | (b << 16) | (g << 8) | r; break;
+			  case WS2812_RWGB: n = (r << 24) | (w << 16) | (g << 8) | b; break;
+			  case WS2812_RWBG: n = (r << 24) | (w << 16) | (b << 8) | g; break;
+			  case WS2812_GWRB: n = (g << 24) | (w << 16) | (r << 8) | b; break;
+			  case WS2812_GWBR: n = (g << 24) | (w << 16) | (b << 8) | r; break;
+			  case WS2812_BWRG: n = (b << 24) | (w << 16) | (r << 8) | g; break;
+			  case WS2812_BWGR: n = (b << 24) | (w << 16) | (g << 8) | r; break;
+			  case WS2812_RGWB: n = (r << 24) | (g << 16) | (w << 8) | b; break;
+			  case WS2812_RBWG: n = (r << 24) | (b << 16) | (w << 8) | g; break;
+			  case WS2812_GRWB: n = (g << 24) | (r << 16) | (w << 8) | b; break;
+			  case WS2812_GBWR: n = (g << 24) | (b << 16) | (w << 8) | r; break;
+			  case WS2812_BRWG: n = (b << 24) | (r << 16) | (w << 8) | g; break;
+			  case WS2812_BGWR: n = (b << 24) | (g << 16) | (w << 8) | r; break;
+			}
+			const uint8_t *stop = fb + 16;
+			do {
+				uint8_t x = 0x08;
+				if (!(n & 0x80000000)) x |= 0x07;
+				if (!(n & 0x40000000)) x |= 0xE0;
+				n <<= 2;
+				*fb++ = x;
+			} while (fb < stop);
+		}
+		microseconds_per_led = 40;
+		bytes_per_led = 16;
 	}
 	// wait 300us WS2812 reset time
-	uint32_t min_elapsed = (numled * 30) + 300;
+	uint32_t min_elapsed = (numled * microseconds_per_led) + 300;
 	if (min_elapsed < 2500) min_elapsed = 2500;
 	uint32_t m;
 	while (1) {
@@ -267,24 +331,24 @@ void WS2812Serial::show()
 	prior_micros = m;
 	// start DMA transfer to update LEDs  :-)
 #if defined(KINETISK)
-	dma->sourceBuffer(frameBuffer, numled * 12);
+	dma->sourceBuffer(frameBuffer, numled * bytes_per_led);
 	dma->transferSize(1);
-	dma->transferCount(numled * 12);
+	dma->transferCount(numled * bytes_per_led);
 	dma->disableOnCompletion();
 	dma->enable();
 #elif defined(KINETISL)
 	dma->CFG->SAR = frameBuffer;
 	dma->CFG->DSR_BCR = 0x01000000;
-	dma->CFG->DSR_BCR = numled * 12;
+	dma->CFG->DSR_BCR = numled * bytes_per_led;
 	dma->CFG->DCR = DMA_DCR_ERQ | DMA_DCR_CS | DMA_DCR_SSIZE(1) |
 		DMA_DCR_SINC | DMA_DCR_DSIZE(1) | DMA_DCR_D_REQ;
 #elif defined(__IMXRT1062__)
 	// See if we need to muck with DMA cache...
-	if ((uint32_t)frameBuffer >= 0x20200000u)  arm_dcache_flush(frameBuffer, numled * 12);
+	if ((uint32_t)frameBuffer >= 0x20200000u)  arm_dcache_flush(frameBuffer, numled * bytes_per_led);
 	
-	dma->sourceBuffer(frameBuffer, numled * 12);
+	dma->sourceBuffer(frameBuffer, numled * bytes_per_led);
 //	dma->transferSize(1);
-	dma->transferCount(numled * 12);
+	dma->transferCount(numled * bytes_per_led);
 	dma->disableOnCompletion();
 
 /*	Serial.printf("%x %x:", (uint32_t)dma, (uint32_t)dma->TCD);
