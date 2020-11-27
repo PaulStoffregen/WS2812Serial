@@ -121,6 +121,9 @@ bool WS2812Serial::begin()
 
 #elif defined(__IMXRT1062__)
 	  case 1: // Serial1
+#if defined(ARDUINO_TEENSY41)
+	  case 53:
+#endif
 		uart = &IMXRT_LPUART6; 
 		CCM_CCGR3 |= CCM_CCGR3_LPUART6(CCM_CCGR_ON);
 		hwtrigger = DMAMUX_SOURCE_LPUART6_TX; 
@@ -141,7 +144,11 @@ bool WS2812Serial::begin()
 		hwtrigger = DMAMUX_SOURCE_LPUART3_TX; 
 		break;
 	  case 20: // Serial5
+#if defined(ARDUINO_TEENSY40)
 	  case 39: // Serial5 alt
+#elif defined(ARDUINO_TEENSY41)
+	  case 47:
+#endif
 		uart = &IMXRT_LPUART8; 
 		CCM_CCGR6 |= CCM_CCGR6_LPUART8(CCM_CCGR_ON);
 		hwtrigger = DMAMUX_SOURCE_LPUART8_TX; 
@@ -156,6 +163,13 @@ bool WS2812Serial::begin()
 		CCM_CCGR5 |= CCM_CCGR5_LPUART7(CCM_CCGR_ON);
 		hwtrigger = DMAMUX_SOURCE_LPUART7_TX; 
 		break;
+#if defined(ARDUINO_TEENSY41)
+	  case 35:
+		uart = &IMXRT_LPUART5; 
+		CCM_CCGR3 |= CCM_CCGR3_LPUART5(CCM_CCGR_ON);
+		hwtrigger = DMAMUX_SOURCE_LPUART5_TX; 
+		break;
+#endif		
 #endif
 	  default:
 		return false; // pin not supported

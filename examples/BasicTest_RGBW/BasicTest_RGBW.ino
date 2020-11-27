@@ -15,6 +15,7 @@ const int pin = 1;
 //   Teensy 3.5:  1, 5, 8, 10, 26, 32, 33, 48
 //   Teensy 3.6:  1, 5, 8, 10, 26, 32, 33
 //   Teensy 4.0:  1, 8, 14, 17, 20, 24, 29, 39
+//   Teensy 4.1:  1, 8, 14, 17, 20, 24, 29, 35, 47, 53
 
 byte drawingMemory[numled*4];         //  4 bytes per LED for RGBW
 DMAMEM byte displayMemory[numled*16]; // 16 bytes per LED for RGBW
