@@ -194,7 +194,11 @@ bool WS2812Serial::begin()
 	uart->CTRL = (LPUART_CTRL_TE /*| LPUART_CTRL_TIE */ | LPUART_CTRL_TXINV); // enable transmitter and invert
 	// We need to configure the TX pin now.
 	*(portControlRegister(pin)) =  IOMUXC_PAD_SRE | IOMUXC_PAD_DSE(3) | IOMUXC_PAD_SPEED(3);
-	*(portConfigRegister(pin)) = 2;	// from hardware table for each one, but I think they are all 2...
+	uint32_t pinmuxval = 2; // most of them use mux ALT2
+#if defined(ARDUINO_TEENSY41)
+	if (pin == 35) pinmuxval = 1;
+#endif
+	*(portConfigRegister(pin)) = pinmuxval;
 
 	dma->destination((volatile uint8_t&)uart->DATA);
 	//Serial.printf("HWTrigger: %x\n", hwtrigger);

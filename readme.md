@@ -25,15 +25,16 @@ used to transmit the data, making that port unavailable for other uses.
 
 ## Supported Pins & Serial Ports
 
-| Port    | Teensy LC   | Teensy 3.2 | Teensy 3.5 | Teensy 3.6 | Teensy 4.0 |
-| :------ | :---------: | :--------: | :--------: | :--------: | :--------: |
-| Serial1 | 1, 4, 5, 24 | 1, 5       | 1, 5, 26   | 1, 5, 26   | 1          |
-| Serial2 |             | 10, 31     | 10         | 10         | 8          |
-| Serial3 |             | 8          | 8          | 8          | 14         |
-| Serial4 |             |            | 32         | 32         | 17         |
-| Serial5 |             |            | 33         | 33         | 20, 39     |
-| Serial6 |             |            | 48         |            | 24         |
-| Serial7 |             |            |            |            | 29         |
+| Port    | Teensy LC   | Teensy 3.2 | Teensy 3.5 | Teensy 3.6 | Teensy 4.0 | Teensy 4.1 |
+| :------ | :---------: | :--------: | :--------: | :--------: | :--------: | :--------: |
+| Serial1 | 1, 4, 5, 24 | 1, 5       | 1, 5, 26   | 1, 5, 26   | 1          | 1, 53      |
+| Serial2 |             | 10, 31     | 10         | 10         | 8          | 8          |
+| Serial3 |             | 8          | 8          | 8          | 14         | 14         |
+| Serial4 |             |            | 32         | 32         | 17         | 17         |
+| Serial5 |             |            | 33         | 33         | 20, 39     | 20, 47     |
+| Serial6 |             |            | 48         |            | 24         | 24         |
+| Serial7 |             |            |            |            | 29         | 29         |
+| Serial8 |             |            |            |            |            | 35         |
 
 Serial2 & Serial3 on Teensy LC are not supported, due to lack of configurable
 oversampling needed to run at the high speed required.
