@@ -88,7 +88,7 @@ public:
 		setPixel(num, Color(red, green, blue, white));
 	}
 	void clear() {
-        	memset(drawBuffer, 0, numled * 3);
+		memset(drawBuffer, 0, numled * ((config < 6) ? 3 : 4));
 	} 	
 	void show();
 	bool busy();
