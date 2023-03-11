@@ -339,7 +339,7 @@ void WS2812Serial::show()
 	}
 	// wait 300us WS2812 reset time
 	uint32_t min_elapsed = (numled * microseconds_per_led) + 300;
-	if (min_elapsed < 2500) min_elapsed = 2500;
+	//if (min_elapsed < 2500) min_elapsed = 2500; // limit refresh to 400 Hz
 	uint32_t m;
 	while (1) {
 		m = micros();
