@@ -39,7 +39,7 @@ used to transmit the data, making that port unavailable for other uses.
 Serial2 & Serial3 on Teensy LC are not supported, due to lack of configurable
 oversampling needed to run at the high speed required.
 
-Serial3-Serial6 should be used only with CPU speeds 120 or 180 MHz.
+Serial3-Serial6 on Teensy 3.5 or 3.6 should be used only with CPU speeds 120 or 180 MHz.
 
 Serial6 on Teensy 3.6 is not currently supported, due to different hardware
 registers.
