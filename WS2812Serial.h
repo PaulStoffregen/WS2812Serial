@@ -66,7 +66,7 @@ public:
 		frameBuffer((uint8_t *)fb), drawBuffer((uint8_t *)db) {
 	}
 	bool begin();
-	void setPixel(uint32_t num, uint32_t color) {
+	void setPixel(uint16_t num, uint32_t color) {
 		if (num >= numled) return;
 		if (config < 6) {
 			num *= 3;
@@ -81,10 +81,10 @@ public:
 			drawBuffer[num+3] = (color >> 24) & 255;
 		}
 	}
-	void setPixel(uint32_t num, uint8_t red, uint8_t green, uint8_t blue) {
+	void setPixel(uint16_t num, uint8_t red, uint8_t green, uint8_t blue) {
 		setPixel(num, Color(red, green, blue));
 	}
-	void setPixel(uint32_t num, uint8_t red, uint8_t green, uint8_t blue, uint8_t white) {
+	void setPixel(uint16_t num, uint8_t red, uint8_t green, uint8_t blue, uint8_t white) {
 		setPixel(num, Color(red, green, blue, white));
 	}
 	void clear() {
